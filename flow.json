@@ -1,0 +1,52 @@
+{
+	"emulators": {
+		"default": {
+			"port": 3569,
+			"serviceAccount": "emulator-account"
+		}
+	},
+	"contracts": {
+		"NonFungibleToken": {
+			"source": "./contracts/standard/NonFungibleToken.cdc",
+			"aliases": {
+				"emulator": "0x0ae53cb6e3f42a79"
+			}
+		},
+		"CarbonHive": "./contracts/CarbonHive.cdc"
+	},
+	"deployments": {
+		"emulator": {
+			"emulator-account": [
+				"NonFungibleToken",
+				"CarbonHive"
+			]
+		}
+	},
+	"accounts": {
+		"emulator-account": {
+			"address": "f8d6e0586b0a20c7",
+			"keys": "b616db20fb104570577204a293c496abe6708833113ddaf36281dfb7f9934fea",
+			"chain": "flow-emulator"
+		}
+	},
+	"emulatorAccounts" : {
+		"carbonhive" : "179b6b1cb6755e31",
+		"partner" : "f3fcd2c1a78f5eee",
+		"buyer1" : "e03daebed8ca0615",
+		"buyer2": "045a1763c93006ca"
+	},
+	"networks": {
+		"emulator": {
+			"host": "127.0.0.1:3569",
+			"chain": "flow-emulator"
+		},
+		"mainnet": {
+			"host": "access.mainnet.nodes.onflow.org:9000",
+			"chain": "flow-mainnet"
+		},
+		"testnet": {
+			"host": "access.devnet.nodes.onflow.org:9000",
+			"chain": "flow-testnet"
+		}
+	}
+}
