@@ -9,7 +9,8 @@
 		"NonFungibleToken": {
 			"source": "./contracts/standard/NonFungibleToken.cdc",
 			"aliases": {
-				"emulator": "0x0ae53cb6e3f42a79"
+				"emulator": "0x0ae53cb6e3f42a79",
+				"testnet": "0x631e88ae7f1d7c20"
 			}
 		},
 		"CarbonHive": "./contracts/CarbonHive.cdc"
@@ -25,7 +26,7 @@
 	"accounts": {
 		"emulator-account": {
 			"address": "f8d6e0586b0a20c7",
-			"keys": "b616db20fb104570577204a293c496abe6708833113ddaf36281dfb7f9934fea",
+			"keys": "2f2eabbdd154353a512aed9d63c0308180aab324656d2e2e8de9f6c95ba0659d",
 			"chain": "flow-emulator"
 		}
 	},

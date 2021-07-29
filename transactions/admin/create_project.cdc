@@ -6,19 +6,20 @@ import CarbonHive from 0xf8d6e0586b0a20c7
 transaction(
     name: String, 
     description: String, 
-    projectOwner: String, 
-    projectType: String, 
+    url: String,
+    developer: String, 
+    type: String, 
     location: String, 
-    gis: String, 
+    locationDescriptor: String, 
     metadata: {String: String}
 ) {
     
-    let adminRef: &CarbonHive.ProjectAdmin
+    let adminRef: &CarbonHive.Admin
     let currProjectID: UInt32
 
     prepare(acct: AuthAccount) {
         // borrow a reference to the Admin resource in storage
-        self.adminRef = acct.borrow<&CarbonHive.ProjectAdmin>(from: /storage/CarbonHiveAdmin)
+        self.adminRef = acct.borrow<&CarbonHive.Admin>(from: /storage/CarbonHiveAdmin)
             ?? panic("Could not borrow a reference to the Admin resource")
         self.currProjectID = CarbonHive.nextProjectID;
     }
@@ -28,10 +29,11 @@ transaction(
         self.adminRef.createProject(
             name: name,
             description: description,
-            projectOwner: projectOwner,
-            projectType: projectType,
+            url: url,
+            developer: developer,
+            type: type,
             location: location,
-            gis: gis,
+            locationDescriptor: locationDescriptor,
             metadata: metadata
         )
     }

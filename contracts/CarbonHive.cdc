@@ -10,7 +10,16 @@ pub contract CarbonHive: NonFungibleToken {
     pub event ReportAddedToProject(projectID: UInt32, reportID: UInt32)
     pub event CompletedFundingRound(projectID: UInt32, fundingRoundID: UInt32, numImpacts: UInt32)
     pub event ProjectClosed(projectID: UInt32)
-    pub event ImpactMinted(impactID: UInt64, projectID: UInt32, fundingRoundID: UInt32, serialNumber: UInt32)
+    pub event ImpactMinted(
+        impactID: UInt64,
+        projectID: UInt32,
+        fundingRoundID: UInt32,
+        serialNumber: UInt32,
+        amount: UInt32,
+        location: String,
+        locationDescriptor: String,
+        vintagePeriod: String
+    )
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
     pub event ImpactDestroyed(id: UInt64)
@@ -37,9 +46,11 @@ pub contract CarbonHive: NonFungibleToken {
         pub let formula: String
         pub let formulaType: String
         pub let unit: String
-        pub let timePeriod: String
-        pub let fundingRoundGoal: UInt32
-        pub let fundingRoundEndTime: Fix64
+        pub let vintagePeriod: String
+        pub let totalAmount: UInt32
+        pub let roundEnds: Fix64
+        pub let location: String
+        pub let locationDescriptor: String
         pub let projectID: UInt32
         pub let reports: [UInt32]
         pub let metadata: {String: String}
@@ -50,9 +61,11 @@ pub contract CarbonHive: NonFungibleToken {
             formula: String,
             formulaType: String,
             unit: String,
-            timePeriod: String,
-            fundingRoundGoal: UInt32,
-            fundingRoundEndTime: Fix64,
+            vintagePeriod: String,
+            totalAmount: UInt32,
+            roundEnds: Fix64,
+            location: String,
+            locationDescriptor: String,
             projectID: UInt32,
             metadata: {String: String}
         ) {
@@ -65,9 +78,11 @@ pub contract CarbonHive: NonFungibleToken {
             self.formula = formula
             self.formulaType = formulaType
             self.unit = unit
-            self.timePeriod = timePeriod
-            self.fundingRoundGoal = fundingRoundGoal
-            self.fundingRoundEndTime = fundingRoundEndTime
+            self.vintagePeriod = vintagePeriod
+            self.totalAmount = totalAmount
+            self.roundEnds = roundEnds
+            self.location = location
+            self.locationDescriptor = locationDescriptor
             self.projectID = projectID
             self.reports = []
             self.metadata = metadata
@@ -81,29 +96,29 @@ pub contract CarbonHive: NonFungibleToken {
         pub var fundingRounds: [UInt32]
         pub var fundingRoundCompleted: {UInt32: Bool}
         pub var closed: Bool
+        pub var url: String
         pub var name: String
-        pub var projectOwner: String
+        pub var developer: String
         pub var description: String
         pub var location: String
-        pub var gis: String
-        pub var projectType: String
+        pub let locationDescriptor: String
+        pub var type: String
         pub var reports: [UInt32]
         pub var metadata: { String: String}
-        pub var impactMintedPerFundingRound: {UInt32: UInt32}
 
         init(
             fundingRounds: [UInt32],
             fundingRoundCompleted: {UInt32: Bool},
             closed: Bool,
+            url: String,
             metadata: { String: String},
             name: String,
-            projectOwner: String,
+            developer: String,
             description: String,
             location: String,
-            gis: String,
-            projectType: String,
+            locationDescriptor: String,
+            type: String,
             reports: [UInt32],
-            impactMintedPerFundingRound: {UInt32: UInt32}
         ) {
             pre {
                 name != "": "New project name cannot be empty"
@@ -112,15 +127,15 @@ pub contract CarbonHive: NonFungibleToken {
             self.fundingRounds = fundingRounds
             self.fundingRoundCompleted = fundingRoundCompleted
             self.closed = closed
+            self.url = url
             self.metadata = metadata
             self.name = name
-            self.projectOwner = projectOwner
+            self.developer = developer
             self.description = description
             self.location = location
-            self.gis = gis
-            self.projectType = projectType
+            self.locationDescriptor = locationDescriptor
+            self.type = type
             self.reports = reports
-            self.impactMintedPerFundingRound = impactMintedPerFundingRound
 
             CarbonHive.nextProjectID = CarbonHive.nextProjectID + (1 as UInt32)
 
@@ -173,23 +188,26 @@ pub contract CarbonHive: NonFungibleToken {
         pub var fundingRounds: [UInt32]
         pub var fundingRoundCompleted: {UInt32: Bool}
         pub var closed: Bool
+        pub var url: String
         pub var metadata: { String: String}
         pub var name: String
-        pub var projectOwner: String
+        pub var developer: String
         pub var description: String
         pub var location: String
-        pub var gis: String
-        pub var projectType: String
+        pub var locationDescriptor: String
+        pub var type: String
         pub var reports: [UInt32]
         pub var impactMintedPerFundingRound: {UInt32: UInt32}
-
+        pub var impactAmountPerFundingRound: {UInt32: UInt32}
+        
         init(
             name: String,
             description: String,
-            projectOwner: String,
-            projectType: String,
+            url: String,
+            developer: String,
+            type: String,
             location: String,
-            gis: String,
+            locationDescriptor: String,
             metadata: {String: String}
         ) {
             self.projectID = CarbonHive.nextProjectID
@@ -197,28 +215,30 @@ pub contract CarbonHive: NonFungibleToken {
             self.reports = []
             self.fundingRoundCompleted = {}
             self.closed = false
+            self.url = url
             self.impactMintedPerFundingRound = {}
+            self.impactAmountPerFundingRound = {}
             self.metadata = metadata
-            self.projectType = projectType
+            self.type = type
             self.name = name
             self.description = description
-            self.projectOwner = projectOwner
+            self.developer = developer
             self.location = location
-            self.gis = gis
+            self.locationDescriptor = locationDescriptor
 
             CarbonHive.projectDatas[self.projectID] = ProjectData(
                 fundingRounds: self.fundingRounds,
                 fundingRoundCompleted: self.fundingRoundCompleted,
                 closed: self.closed,
+                url: url,
                 metadata: metadata,
                 name: name,
-                projectOwner: projectOwner,
+                developer: developer,
                 description: description,
                 location: location,
-                gis: gis,
-                projectType: projectType,
-                reports: self.reports,
-                impactMintedPerFundingRound: self.impactMintedPerFundingRound
+                locationDescriptor: locationDescriptor,
+                type: type,
+                reports: self.reports
             )
         }
 
@@ -240,6 +260,7 @@ pub contract CarbonHive: NonFungibleToken {
             self.fundingRounds.append(fundingRoundID)
             self.fundingRoundCompleted[fundingRoundID] = false
             self.impactMintedPerFundingRound[fundingRoundID] = 0
+            self.impactAmountPerFundingRound[fundingRoundID] = 0
             emit FundingRoundAddedToProject(projectID: self.projectID, fundingRoundID: fundingRoundID)
         }
 
@@ -275,8 +296,10 @@ pub contract CarbonHive: NonFungibleToken {
         pub fun mintImpact(
             fundingRoundID: UInt32,
             amount: UInt32,
-            gis: String,
-            timePeriod: String
+            location: String,
+            locationDescriptor: String,
+            vintagePeriod: String,
+            content: @AnyResource{CarbonHive.Content}
         ): @NFT {
             pre {
                 CarbonHive.fundingRoundDatas[fundingRoundID] != nil: "Cannot mint the Impact: This FundingRound doesn't exist."
@@ -286,26 +309,31 @@ pub contract CarbonHive: NonFungibleToken {
             let block = getCurrentBlock()
             let time = Fix64(block.timestamp)
             let fundingRound = CarbonHive.fundingRoundDatas[fundingRoundID]!
-            if fundingRound.fundingRoundEndTime < time {
-                panic("The funding round ended on ".concat(fundingRound.fundingRoundEndTime.toString()).concat(" now: ").concat(block.timestamp.toString()))
+            if fundingRound.roundEnds < time {
+                panic("The funding round ended on ".concat(fundingRound.roundEnds.toString()).concat(" now: ").concat(block.timestamp.toString()))
             }
 
-            let numInFundingRound = self.impactMintedPerFundingRound[fundingRoundID]!
-            if fundingRound.fundingRoundGoal == numInFundingRound {
-                panic("The funding round ended, goal reached: ".concat(fundingRound.fundingRoundGoal.toString()).concat(" impact minted"))
-            } 
+            let amountInFundingRound = self.impactAmountPerFundingRound[fundingRoundID]!
+            let remainingAmount = fundingRound.totalAmount - amountInFundingRound
+            if amount >= remainingAmount {
+                panic("Not enough amount left for minting impact: ".concat(amountInFundingRound.toString()).concat(" amount minted, ").concat(remainingAmount.toString()).concat(" amount remaining."))
+            }
+
+            let impactsInFundingRound = self.impactMintedPerFundingRound[fundingRoundID]!
 
             let newImpact: @NFT <- create NFT(
                 projectID: self.projectID,
                 fundingRoundID: fundingRoundID,
-                serialNumber: numInFundingRound + (1 as UInt32),
+                serialNumber: impactsInFundingRound + (1 as UInt32),
                 amount: amount, 
-                gis: gis,
-                timePeriod: timePeriod
+                location: location,
+                locationDescriptor: locationDescriptor,
+                vintagePeriod: vintagePeriod,
+                content: <- content
             )
 
-            self.impactMintedPerFundingRound[fundingRoundID] = numInFundingRound + (1 as UInt32)
-
+            self.impactMintedPerFundingRound[fundingRoundID] = impactsInFundingRound + (1 as UInt32)
+            self.impactAmountPerFundingRound[fundingRoundID] = amountInFundingRound + amount
             return <-newImpact
         }
     }
@@ -316,37 +344,67 @@ pub contract CarbonHive: NonFungibleToken {
         pub let fundingRoundID: UInt32
         pub let serialNumber: UInt32
         pub let amount: UInt32
-        pub let gis: String
-        pub let timePeriod: String
+        pub let location: String
+        pub let locationDescriptor: String
+        pub let vintagePeriod: String
 
         init(
             projectID: UInt32,
             fundingRoundID: UInt32,
             serialNumber: UInt32,
             amount: UInt32,
-            gis: String,
-            timePeriod: String
+            location: String,
+            locationDescriptor: String,
+            vintagePeriod: String
         ) {
             self.projectID = projectID
             self.fundingRoundID = fundingRoundID
             self.serialNumber = serialNumber
             self.amount = amount
-            self.gis = gis
-            self.timePeriod = timePeriod
+            self.location = location
+            self.locationDescriptor = locationDescriptor
+            self.vintagePeriod = vintagePeriod
         }
     }
+
+    pub resource interface Content {
+        pub fun getData(): String
+        pub fun getContentType(): String
+    }
+
+    pub resource ImpactContent: Content {
+        access(contract) let data: String
+        access(contract) let type: String
+
+        init(data: String, type: String) {
+            self.data = data
+            self.type = type
+        }
+
+        pub fun getData(): String {
+            return self.data
+        }
+
+        pub fun getContentType(): String {
+            return self.type
+        }
+    }
+
 
     pub resource NFT: NonFungibleToken.INFT {
         pub let id: UInt64 
         pub let data: ImpactData
+        pub let content: @AnyResource{CarbonHive.Content}
 
         init(
             projectID: UInt32,
             fundingRoundID: UInt32,
             serialNumber: UInt32,
             amount: UInt32,
-            gis: String,
-            timePeriod: String
+            location: String,
+            locationDescriptor: String,
+            vintagePeriod: String,
+            content: @AnyResource{CarbonHive.Content}
         ) {
             CarbonHive.totalSupply = CarbonHive.totalSupply + (1 as UInt64)
             self.id = CarbonHive.totalSupply
@@ -355,24 +413,31 @@ pub contract CarbonHive: NonFungibleToken {
                 fundingRoundID: fundingRoundID,
                 serialNumber: serialNumber,
                 amount: amount,
-                gis: gis,
-                timePeriod: timePeriod
+                location: location,
+                locationDescriptor: locationDescriptor,
+                vintagePeriod: vintagePeriod
             )
+            self.content <- content 
 
             emit ImpactMinted(
                 impactID: self.id,
                 projectID: self.data.projectID,
                 fundingRoundID: self.data.fundingRoundID,
-                serialNumber: self.data.serialNumber
+                serialNumber: self.data.serialNumber,
+                amount: self.data.amount,
+                location: self.data.location,
+                locationDescriptor: self.data.locationDescriptor,
+                vintagePeriod: self.data.vintagePeriod
             )
         }
 
         destroy() {
+            destroy self.content
             emit ImpactDestroyed(id: self.id)
         }
     }
 
-    pub resource ProjectAdmin {
+    pub resource interface ProjectAdmin {
 
         pub fun createFundingRound(
             name: String,
@@ -380,9 +445,60 @@ pub contract CarbonHive: NonFungibleToken {
             formula: String,
             formulaType: String,
             unit: String,
-            timePeriod: String,
-            fundingRoundGoal: UInt32,
-            fundingRoundEndTime: Fix64,
+            vintagePeriod: String,
+            totalAmount: UInt32,
+            roundEnds: Fix64,
+            location: String,
+            locationDescriptor: String,
+            projectID: UInt32,
+            metadata: {String: String}
+        ): UInt32
+
+        pub fun createReport(
+            date: String,
+            projectID: UInt32,
+            fundingRoundID: UInt32,
+            description: String,
+            reportContent: String,
+            reportContentType: String,
+            metadata: {String: String}
+        ): UInt32
+
+        pub fun createProject(
+            name: String, 
+            description: String, 
+            url: String,
+            developer: String, 
+            type: String, 
+            location: String, 
+            locationDescriptor: String, 
+            metadata: {String: String}
+        )
+
+        pub fun borrowProject(projectID: UInt32): &Project
+
+    }
+
+    pub resource interface ContentAdmin {
+        pub fun createContent(
+            data: String,
+            contentType: String
+        ): @AnyResource{CarbonHive.Content}
+    }
+
+    pub resource Admin: ProjectAdmin, ContentAdmin {
+
+        pub fun createFundingRound(
+            name: String,
+            description: String,
+            formula: String,
+            formulaType: String,
+            unit: String,
+            vintagePeriod: String,
+            totalAmount: UInt32,
+            roundEnds: Fix64,
+            location: String,
+            locationDescriptor: String,
             projectID: UInt32,
             metadata: {String: String}
         ): UInt32 {
@@ -392,9 +508,11 @@ pub contract CarbonHive: NonFungibleToken {
                 formula: formula,
                 formulaType: formulaType,
                 unit: unit,
-                timePeriod: timePeriod,
-                fundingRoundGoal: fundingRoundGoal,
-                fundingRoundEndTime: fundingRoundEndTime,
+                vintagePeriod: vintagePeriod,
+                totalAmount: totalAmount,
+                roundEnds: roundEnds,
+                location: location,
+                locationDescriptor: locationDescriptor,
                 projectID: projectID,
                 metadata: metadata
             )
@@ -429,22 +547,34 @@ pub contract CarbonHive: NonFungibleToken {
         pub fun createProject(
             name: String, 
             description: String, 
-            projectOwner: String, 
-            projectType: String, 
+            url: String,
+            developer: String, 
+            type: String, 
             location: String, 
-            gis: String, 
+            locationDescriptor: String, 
             metadata: {String: String}
         ) {
             var newProject <- create Project(
                 name: name,
                 description: description,
-                projectOwner: projectOwner,
-                projectType: projectType,
+                url: url,
+                developer: developer,
+                type: type,
                 location: location,
-                gis: gis,
+                locationDescriptor: locationDescriptor,
                 metadata: metadata
             )
             CarbonHive.projects[newProject.projectID] <-! newProject
+        }
+
+        pub fun createContent(
+            data: String,
+            contentType: String
+        ): @AnyResource{CarbonHive.Content} {
+            return <- create ImpactContent(
+                data: data,
+                type: contentType
+            )
         }
 
         pub fun borrowProject(projectID: UInt32): &Project {
@@ -454,8 +584,8 @@ pub contract CarbonHive: NonFungibleToken {
             return &CarbonHive.projects[projectID] as &Project
         }
 
-        pub fun createNewAdmin(): @ProjectAdmin {
-            return <-create ProjectAdmin()
+        pub fun createNewAdmin(): @Admin {
+            return <-create Admin()
         }
     }
 
@@ -539,10 +669,9 @@ pub contract CarbonHive: NonFungibleToken {
         return <-create CarbonHive.Collection()
     }
 
-    pub fun getProjectData(projectID: UInt32): {String: String}? {
-        return self.projectDatas[projectID]?.metadata
+    pub fun getProjectData(projectID: UInt32): ProjectData? {
+        return self.projectDatas[projectID]
     }
-
 
     pub fun getFundingRoundsInProject(projectID: UInt32): [UInt32]? {
         return CarbonHive.projects[projectID]?.fundingRounds
@@ -550,6 +679,17 @@ pub contract CarbonHive: NonFungibleToken {
 
     pub fun getReportsInProject(projectID: UInt32): [UInt32]? {
         return CarbonHive.projects[projectID]?.reports
+    }
+
+    pub fun getAmountUsedInFundingRound(projectID: UInt32, fundingRoundID: UInt32): UInt32? {
+        if let projectToRead <- CarbonHive.projects.remove(key: projectID) {
+            let amount = projectToRead.impactAmountPerFundingRound[fundingRoundID]
+            CarbonHive.projects[projectID] <-! projectToRead
+            return amount
+        } else {
+            // If the project wasn't found return nil
+            return nil
+        }
     }
 
     init() {
@@ -569,7 +709,7 @@ pub contract CarbonHive: NonFungibleToken {
 
         self.account.save<@Collection>(<- create Collection(), to: self.ImpactCollectionStoragePath)
         self.account.link<&{ImpactCollectionPublic}>(self.ImpactCollectionPublicPath, target: self.ImpactCollectionStoragePath)
-        self.account.save<@ProjectAdmin>(<- create ProjectAdmin(), to: self.AdminStoragePath)
+        self.account.save<@Admin>(<- create Admin(), to: self.AdminStoragePath)
 
         emit ContractInitialized()
     }

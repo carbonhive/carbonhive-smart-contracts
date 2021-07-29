@@ -10,15 +10,15 @@ transaction(
             metadata: {String: String}
 ) {
 
-    // Local variable for the ProjectAdmin object
-    let adminRef: &CarbonHive.ProjectAdmin
+    // Local variable for the Admin object
+    let adminRef: &CarbonHive.Admin
     let currReportID: UInt32
 
     prepare(acct: AuthAccount) {
 
-        // borrow a reference to the ProjectAdmin resource in storage
-        self.adminRef = acct.borrow<&CarbonHive.ProjectAdmin>(from: /storage/CarbonHiveAdmin)
-            ?? panic("Could not borrow a reference to the ProjectAdmin resource")
+        // borrow a reference to the Admin resource in storage
+        self.adminRef = acct.borrow<&CarbonHive.Admin>(from: /storage/CarbonHiveAdmin)
+            ?? panic("Could not borrow a reference to the Admin resource")
         self.currReportID = CarbonHive.nextReportID;
     }
 

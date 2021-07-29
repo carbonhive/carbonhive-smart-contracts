@@ -22,10 +22,11 @@ func main() {
 		SignProposeAndPayAsService().
 		StringArgument("name").
 		StringArgument("description").
-		StringArgument("projectOwner").
-		StringArgument("projectType").
+		StringArgument("url").
+		StringArgument("developer").
+		StringArgument("type").
 		StringArgument("location").
-		StringArgument("gis").
+		StringArgument("locationDescriptor").
 		Argument(metadata).
 		RunPrintEventsFull()
 
@@ -34,16 +35,18 @@ func main() {
 	keyValueFr := []cadence.KeyValuePair{{Key: keyFr, Value: valueFr}}
 	metadataFr := cadence.NewDictionary(keyValueFr)
 
-	flow.TransactionFromFile("admin/add_funding_round_to_project").
+	flow.TransactionFromFile("admin/add_fundingRound_to_project").
 		SignProposeAndPayAsService().
 		StringArgument("name").
 		StringArgument("description").
 		StringArgument("formula").
 		StringArgument("formulaType").
 		StringArgument("unit").
-		StringArgument("timePeriod").
-		UInt32Argument(1).
+		StringArgument("vintagePeriod").
+		UInt32Argument(100).
 		Fix64Argument("1923881437.00000000").
+		StringArgument("location").
+		StringArgument("locationDescriptor").
 		UInt32Argument(1).
 		Argument(metadataFr).
 		RunPrintEventsFull()
@@ -57,9 +60,12 @@ func main() {
 		AccountArgument("buyer1").
 		UInt32Argument(1).
 		UInt32Argument(1).
-		UInt32Argument(1).
-		StringArgument("gis").
-		StringArgument("timePeriod").
+		UInt32Argument(40).
+		StringArgument("location").
+		StringArgument("locationDescriptor").
+		StringArgument("vintagePeriod").
+		StringArgument("contentData").
+		StringArgument("contentType").
 		RunPrintEventsFull()
 
 	keyRep := cadence.NewString("reportdata")
@@ -77,4 +83,41 @@ func main() {
 		StringArgument("reportContentType").
 		Argument(metadataRep).
 		RunPrintEventsFull()
+
+	flow.ScriptFromFile("get_fundingRounds_in_project").
+		UInt32Argument(1).
+		Run()
+
+	flow.ScriptFromFile("get_reports_in_project").
+		UInt32Argument(1).
+		Run()
+
+	flow.ScriptFromFile("get_project_data").
+		UInt32Argument(1).
+		Run()
+
+	flow.ScriptFromFile("get_collection_ids").
+		AccountArgument("buyer1").
+		Run()
+
+	flow.ScriptFromFile("get_impact").
+		AccountArgument("buyer1").
+		UInt64Argument(1).
+		Run()
+
+	flow.ScriptFromFile("get_impact_content_data").
+		AccountArgument("buyer1").
+		UInt64Argument(1).
+		Run()
+
+	flow.ScriptFromFile("get_amount_used_in_fundingRound").
+		UInt32Argument(1).
+		UInt32Argument(1).
+		Run()
+
+	flow.ScriptFromFile("get_impact_content_data").
+		AccountArgument("buyer2").
+		UInt64Argument(1).
+		Run()
+
 }

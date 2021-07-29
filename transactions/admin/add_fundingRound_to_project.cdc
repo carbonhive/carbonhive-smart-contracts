@@ -6,22 +6,24 @@ transaction(
     formula: String,
     formulaType: String,
     unit: String,
-    timePeriod: String,
-    fundingRoundGoal: UInt32,
-    fundingRoundEndTime: Fix64,
+    vintagePeriod: String,
+    totalAmount: UInt32,
+    roundEnds: Fix64,
+    location: String,
+    locationDescriptor: String,
     projectID: UInt32,
     metadata: {String: String}
 ) {
 
-    // Local variable for the ProjectAdmin object
-    let adminRef: &CarbonHive.ProjectAdmin
+    // Local variable for the Admin object
+    let adminRef: &CarbonHive.Admin
     let currFundingRoundID: UInt32
 
     prepare(acct: AuthAccount) {
 
-        // borrow a reference to the ProjectAdmin resource in storage
-        self.adminRef = acct.borrow<&CarbonHive.ProjectAdmin>(from: /storage/CarbonHiveAdmin)
-            ?? panic("Could not borrow a reference to the ProjectAdmin resource")
+        // borrow a reference to the Admin resource in storage
+        self.adminRef = acct.borrow<&CarbonHive.Admin>(from: /storage/CarbonHiveAdmin)
+            ?? panic("Could not borrow a reference to the Admin resource")
         self.currFundingRoundID = CarbonHive.nextFundingRoundID;
     }
 
@@ -32,9 +34,11 @@ transaction(
                                             formula: formula,
                                             formulaType: formulaType,
                                             unit: unit,
-                                            timePeriod: timePeriod,
-                                            fundingRoundGoal: fundingRoundGoal,
-                                            fundingRoundEndTime: fundingRoundEndTime,
+                                            vintagePeriod: vintagePeriod,
+                                            totalAmount: totalAmount,
+                                            roundEnds: roundEnds,
+                                            location: location,
+                                            locationDescriptor: locationDescriptor,
                                             projectID: projectID,
                                             metadata: metadata
                                         )
