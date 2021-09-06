@@ -21,9 +21,5 @@ pub fun main(account: Address, id: UInt64): String {
     let token = collectionRef.borrowImpact(id: id)
         ?? panic("Could not borrow a reference to the specified impact")
 
-    let contentRef: &AnyResource{CarbonHive.Content} = &token.content as &AnyResource{CarbonHive.Content}
-
-    log(contentRef.getData())
-
-    return contentRef.getData()
+    return token.getContentData()
 }

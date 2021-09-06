@@ -84,9 +84,26 @@ func main() {
 		Argument(metadataRep).
 		RunPrintEventsFull()
 
-	flow.ScriptFromFile("get_fundingRounds_in_project").
+	keyRep2 := cadence.NewString("reportdata2")
+	valueRep2 := cadence.NewString("some other data")
+	keyValueRep2 := []cadence.KeyValuePair{{Key: keyRep2, Value: valueRep2}}
+	metadataRep2 := cadence.NewDictionary(keyValueRep2)
+
+	flow.TransactionFromFile("admin/add_report_to_fundingRound").
+		SignProposeAndPayAsService().
+		StringArgument("date2").
 		UInt32Argument(1).
-		Run()
+		UInt32Argument(1).
+		StringArgument("description2").
+		StringArgument("reportContent2").
+		StringArgument("reportContentType2").
+		Argument(metadataRep2).
+		RunPrintEventsFull()
+
+	fundingRoundsInProject := flow.ScriptFromFile("get_fundingRounds_in_project").
+		UInt32Argument(1).
+		RunReturnsJsonString()
+	fmt.Println(fundingRoundsInProject)
 
 	flow.ScriptFromFile("get_reports_in_project").
 		UInt32Argument(1).
@@ -94,6 +111,18 @@ func main() {
 
 	flow.ScriptFromFile("get_project_data").
 		UInt32Argument(1).
+		Run()
+
+	flow.ScriptFromFile("get_fundingRound_data").
+		UInt32Argument(1).
+		Run()
+
+	flow.ScriptFromFile("get_reports_data").
+		UInt32Argument(1).
+		Run()
+
+	flow.ScriptFromFile("get_reports_data").
+		UInt32Argument(2).
 		Run()
 
 	flow.ScriptFromFile("get_collection_ids").

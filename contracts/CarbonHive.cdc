@@ -8,6 +8,7 @@ pub contract CarbonHive: NonFungibleToken {
     pub event ProjectCreated(id: UInt32, name: String)
     pub event FundingRoundAddedToProject(projectID: UInt32, fundingRoundID: UInt32)
     pub event ReportAddedToProject(projectID: UInt32, reportID: UInt32)
+    pub event ReportAddedToFundingRound(projectID: UInt32, fundingRoundID: UInt32, reportID: UInt32)
     pub event CompletedFundingRound(projectID: UInt32, fundingRoundID: UInt32, numImpacts: UInt32)
     pub event ProjectClosed(projectID: UInt32)
     pub event ImpactMinted(
@@ -52,8 +53,8 @@ pub contract CarbonHive: NonFungibleToken {
         pub let location: String
         pub let locationDescriptor: String
         pub let projectID: UInt32
-        pub let reports: [UInt32]
-        pub let metadata: {String: String}
+        access(self) let reports: [UInt32]
+        access(self) let metadata: {String: String}
 
         init(
             name: String,
@@ -89,26 +90,29 @@ pub contract CarbonHive: NonFungibleToken {
             CarbonHive.nextFundingRoundID = CarbonHive.nextFundingRoundID + (1 as UInt32)
             emit FundingRoundCreated(id: self.fundingRoundID, projectID: projectID, name: name)
         }
+
+        pub fun addReport(reportID: UInt32) {
+            self.reports.append(reportID)
+        }
     }
 
     pub struct ProjectData {
         pub let projectID: UInt32
-        pub var fundingRounds: [UInt32]
-        pub var fundingRoundCompleted: {UInt32: Bool}
         pub var closed: Bool
-        pub var url: String
-        pub var name: String
-        pub var developer: String
-        pub var description: String
-        pub var location: String
+        pub let url: String
+        pub let name: String
+        pub let developer: String
+        pub let description: String
+        pub let location: String
         pub let locationDescriptor: String
-        pub var type: String
-        pub var reports: [UInt32]
-        pub var metadata: { String: String}
+        pub let type: String
+        access(self) let metadata: {String: String}
+
+        pub fun close() {
+            self.closed = true
+        }
 
         init(
-            fundingRounds: [UInt32],
-            fundingRoundCompleted: {UInt32: Bool},
             closed: Bool,
             url: String,
             metadata: { String: String},
@@ -118,14 +122,11 @@ pub contract CarbonHive: NonFungibleToken {
             location: String,
             locationDescriptor: String,
             type: String,
-            reports: [UInt32],
         ) {
             pre {
                 name != "": "New project name cannot be empty"
             }
             self.projectID = CarbonHive.nextProjectID
-            self.fundingRounds = fundingRounds
-            self.fundingRoundCompleted = fundingRoundCompleted
             self.closed = closed
             self.url = url
             self.metadata = metadata
@@ -135,7 +136,6 @@ pub contract CarbonHive: NonFungibleToken {
             self.location = location
             self.locationDescriptor = locationDescriptor
             self.type = type
-            self.reports = reports
 
             CarbonHive.nextProjectID = CarbonHive.nextProjectID + (1 as UInt32)
 
@@ -151,7 +151,7 @@ pub contract CarbonHive: NonFungibleToken {
         pub let description: String
         pub let reportContent: String
         pub let reportContentType: String
-        pub let metadata: {String: String}
+        access(self) let metadata: {String: String}
 
         init(
             date: String,
@@ -185,20 +185,44 @@ pub contract CarbonHive: NonFungibleToken {
     // the Impact was minted for.
     pub resource Project {
         pub let projectID: UInt32
-        pub var fundingRounds: [UInt32]
-        pub var fundingRoundCompleted: {UInt32: Bool}
+        access(self) var fundingRounds: [UInt32]
+        access(self) var fundingRoundCompleted: {UInt32: Bool}
         pub var closed: Bool
-        pub var url: String
-        pub var metadata: { String: String}
-        pub var name: String
-        pub var developer: String
-        pub var description: String
-        pub var location: String
-        pub var locationDescriptor: String
-        pub var type: String
-        pub var reports: [UInt32]
-        pub var impactMintedPerFundingRound: {UInt32: UInt32}
-        pub var impactAmountPerFundingRound: {UInt32: UInt32}
+        pub let url: String
+        access(self) var metadata: {String: String}
+        pub let name: String
+        pub let developer: String
+        pub let description: String
+        pub let location: String
+        pub let locationDescriptor: String
+        pub let type: String
+        access(self) var reports: [UInt32]
+        access(self) var impactMintedPerFundingRound: {UInt32: UInt32}
+        access(self) var impactAmountPerFundingRound: {UInt32: UInt32}
+
+        pub fun getFundingRounds(): [UInt32] {
+            return self.fundingRounds
+        }
+
+        pub fun getFundingRoundCompleted(fundingRoundID: UInt32): Bool? {
+            return self.fundingRoundCompleted[fundingRoundID]
+        }
+
+        pub fun getReports(): [UInt32] {
+            return self.reports
+        } 
+
+        pub fun getImpactMintedPerFundingRound(fundingRoundID: UInt32): UInt32? {
+            return self.impactMintedPerFundingRound[fundingRoundID]
+        }
+
+        pub fun getImpactAmountPerFundingRound(fundingRoundID: UInt32): UInt32? {
+            return self.impactAmountPerFundingRound[fundingRoundID]
+        }
+
+        pub fun getMetadata(): {String: String} {
+            return self.metadata
+        } 
         
         init(
             name: String,
@@ -227,8 +251,6 @@ pub contract CarbonHive: NonFungibleToken {
             self.locationDescriptor = locationDescriptor
 
             CarbonHive.projectDatas[self.projectID] = ProjectData(
-                fundingRounds: self.fundingRounds,
-                fundingRoundCompleted: self.fundingRoundCompleted,
                 closed: self.closed,
                 url: url,
                 metadata: metadata,
@@ -238,7 +260,6 @@ pub contract CarbonHive: NonFungibleToken {
                 location: location,
                 locationDescriptor: locationDescriptor,
                 type: type,
-                reports: self.reports
             )
         }
 
@@ -248,6 +269,19 @@ pub contract CarbonHive: NonFungibleToken {
             }
             self.reports.append(reportID)
             emit ReportAddedToProject(projectID: self.projectID, reportID: reportID)
+        }
+
+        // Add report to both Funding Round and owning Project
+        pub fun addReportToFundingRound(reportID: UInt32, fundingRoundID: UInt32) {
+            pre {
+                CarbonHive.reportDatas[reportID] != nil: "Cannot add the Report to Funding Round: Report doesn't exist."
+                CarbonHive.fundingRoundDatas[fundingRoundID] != nil: "Cannot add the Report to Funding Round: Funding Round doesn't exist."
+            }
+            let fundingRound = CarbonHive.fundingRoundDatas[fundingRoundID]!
+            self.reports.append(reportID)
+            fundingRound.addReport(reportID: reportID)
+            CarbonHive.fundingRoundDatas[fundingRoundID] = fundingRound
+            emit ReportAddedToFundingRound(projectID: self.projectID, fundingRoundID: fundingRoundID, reportID: reportID)
         }
 
         pub fun addFundingRound(fundingRoundID: UInt32) {
@@ -289,6 +323,9 @@ pub contract CarbonHive: NonFungibleToken {
         pub fun close() {
             if !self.closed {
                 self.closed = true
+                let projectData = CarbonHive.projectDatas[self.projectID] ?? panic("Could not finf project data")
+                projectData.close()
+                CarbonHive.projectDatas[self.projectID] = projectData
                 emit ProjectClosed(projectID: self.projectID)
             }
         }
@@ -394,7 +431,15 @@ pub contract CarbonHive: NonFungibleToken {
     pub resource NFT: NonFungibleToken.INFT {
         pub let id: UInt64 
         pub let data: ImpactData
-        pub let content: @AnyResource{CarbonHive.Content}
+        access(self) let content: @AnyResource{CarbonHive.Content}
+
+        pub fun getContentData() : String {
+            return self.content.getData()
+        }
+
+        pub fun getContentType() : String {
+            return self.content.getContentType()
+        }
 
         init(
             projectID: UInt32,
@@ -673,17 +718,25 @@ pub contract CarbonHive: NonFungibleToken {
         return self.projectDatas[projectID]
     }
 
+    pub fun getReportData(reportID: UInt32): ReportData? {
+        return self.reportDatas[reportID]
+    }
+
+    pub fun getFundingRoundData(fundingRoundID: UInt32): FundingRoundData? {
+        return self.fundingRoundDatas[fundingRoundID]
+    }
+
     pub fun getFundingRoundsInProject(projectID: UInt32): [UInt32]? {
-        return CarbonHive.projects[projectID]?.fundingRounds
+        return CarbonHive.projects[projectID]?.getFundingRounds()
     }
 
     pub fun getReportsInProject(projectID: UInt32): [UInt32]? {
-        return CarbonHive.projects[projectID]?.reports
+        return CarbonHive.projects[projectID]?.getReports()
     }
 
     pub fun getAmountUsedInFundingRound(projectID: UInt32, fundingRoundID: UInt32): UInt32? {
         if let projectToRead <- CarbonHive.projects.remove(key: projectID) {
-            let amount = projectToRead.impactAmountPerFundingRound[fundingRoundID]
+            let amount = projectToRead.getImpactAmountPerFundingRound(fundingRoundID: fundingRoundID)
             CarbonHive.projects[projectID] <-! projectToRead
             return amount
         } else {
@@ -714,3 +767,4 @@ pub contract CarbonHive: NonFungibleToken {
         emit ContractInitialized()
     }
 }
+ 
